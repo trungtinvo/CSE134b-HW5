@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HW5 Part1</title>
+</head>
+
+<body>
+    <form class="methodtest-form">
+        <label for="Id">ID</label>
+        <input type="text" name="Id">
+        <label for="article-name">Article Name</label>
+        <input type="text" name="article-name">
+        <label for="article-body">Article Body</label>
+        <textarea name="article-body" cols="30" rows="1"></textarea>
+        <label for="date">Date</label>
+        <input type="date" class="date" name="date" readonly>
+        <br>
+        <br>
+        <div>
+            <input type="radio" id="xmlhttp" name="requestType" value="xmlhttp">
+            <label for="xmlhttp">XMLHttpRequest</label>
+        </div>
+        <div>
+            <input type="radio" id="fetch" name="requestType" value="fetch">
+            <label for="fetch">Fetch API</label>
+        </div>
+        <button type="submit" id="post-btn">POST</button>
+        <button type="submit" id="get-btn">GET</button>
+        <button type="submit" id="put-btn">PUT</button>
+        <button type="submit" id="delete-btn">DELETE</button>
+
+    </form>
+    <pre><output id="method-output"></output></pre>
+    <script>
+        document.getElementsByClassName("date")[0].valueAsDate = new Date();
+        const testForm = document.getElementsByClassName("methodtest-form")[0];
+
+        const radioButtons = document.querySelectorAll('input[name="requestType"]');
+
+        testForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const methodId = e.target.querySelector('button[type="submit"]:focus').id;
+            const payLoad = new FormData(testForm);
+            const requestType = methodId.slice(0, -4).toUpperCase();
+            console.log(requestType);
+            const url = `https://httpbin.org/${requestType.toLowerCase()}`;
+            console.log(url);
+
+            for (const radioButton of radioButtons) {
+                if (radioButton.checked) {
+                    radioButton.value == xmlhttp ? submitXMLHttpRequest(requestType, url, payLoad) :
+                        submitFetchRequest(requestType, url, payLoad);
+                    console.log(radioButton.value);
+                    break;
+                }
+            }
+        });
+
+        function submitXMLHttpRequest(method, url, payLoad) {
+            const xhr = new XMLHttpRequest();
+            const methodOutput = document.getElementById("method-output");
+            xhr.onreadystatechange = function () {
+                if (this.readyState === XMLHttpRequest.DONE) {
+                    if (this.status === 200) {
+                        const resp = JSON.stringify(JSON.parse(this.responseText), null, 4);
+                        methodOutput.innerHTML = resp;
+                    } else {
+                        console.log("Error: ", this.statusText);
+                    }
+                }
+            };
+            xhr.open(method, url, true);
+            (method === "POST" || method === "PUT") ? xhr.send(payLoad): xhr.send(null);
+
+        }
+
+        async function submitFetchRequest(method, url, payLoad) {
+            const methodOutput = document.getElementById("method-output");
+            const response = await fetch(url, {
+                method: method,
+                body: (method === "POST" || method === "PUT") ? payLoad : null
+            });
+            if (!response.ok) {
+                throw new Error("Error fetching response.");
+            } else {
+                const json = await response.json();
+                const resp = JSON.stringify(json, null, 4);
+                methodOutput.innerHTML = resp;
+            }
+        }
+    </script>
+</body>
+
+</html>
